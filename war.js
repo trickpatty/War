@@ -1,3 +1,7 @@
+var PLAYER_LOST = -1;
+var TIE = 0;
+var PLAYER_WON = 1;
+
 function shuffleDeck(deck) {
     for (var i = 0; i < deck.length; i++) {
         var newIndex = Math.floor(Math.random() * deck.length);
@@ -8,32 +12,50 @@ function shuffleDeck(deck) {
 }
 
 function printDeck(deck) {
+    var text = '';
+
     for (var i = 0; i < deck.length; i++) {
-        console.log(deck[i].toString());
+        text += deck[i].toString() + ' ';
     }
+
+    console.log(text);
 }
 
-var HIGHEST_VALUE = Card.VALUES.length;
+function adjustCardValue(card) {
+    var HIGHEST_VALUE = Card.VALUES.length;
 
-function compareCards(firstCard, secondCard) {
-    a = (firstCard.value == Card.ACE) ? HIGHEST_VALUE : firstCard.value; 
-    b = (secondCard.value == Card.ACE) ? HIGHEST_VALUE : secondCard.value; 
+    if (card.getValue() == Card.ACE) {
+        return HIGHEST_VALUE;
+    }
+
+    return card.getValue();
+}
+
+function compareCards(playerCard, computerCard) {
+    a = adjustCardValue(playerCard);
+    b = adjustCardValue(computerCard);
 
     if (a == b) {
-        return EQUAL;
+        return TIE;
     }
     else if(a < b) {
-        return LESS_THAN;
+        return PLAYER_LOST;
     }
     else {
-        return GREATER_THAN;
+        return PLAYER_WON;
     }
 }
 
 function distributeCards(seedDeck, playerDeck, computerDeck) {
-    while (seedDeck.length > 1) {
+    while (seedDeck.length >= 2) {
         playerDeck.push(seedDeck.pop());
         computerDeck.push(seedDeck.pop());
+    }
+}
+
+function transferCardsToWinner(deck, cards) {
+    while (cards.length > 0) {
+        deck.push(cards.shift());
     }
 }
 
@@ -44,68 +66,74 @@ function startGame() {
     var playerDeck = [];
     var computerDeck = [];
     distributeCards(seedDeck, playerDeck, computerDeck);
-
-    console.log('*****Player********');
-    printDeck(playerDeck);
-
-    console.log('*****Computer******');
-    printDeck(computerDeck);
+    var totalRounds = 0;
 
     do
     {
-       playRound(playerDeck, computerDeck); 
-    }
-    while (playerDeck.length > 1 && computerDeck.length > 1);
+       printDeck(playerDeck);
+       printDeck(computerDeck);
 
-    if (playerDeck.length < 1) {
-        console.log('Player won!');
+       war(playerDeck, computerDeck); 
+       totalRounds++;
+
+       if (totalRounds > 20000) {
+           alert('infinite war!');
+           break;
+       }
+    }
+    while (playersHaveCards(playerDeck, computerDeck));
+
+    if (playerDeck.length == 0) {
+        alert('Computer won in ' + totalRounds + ' rounds');
     }
     else {
-        console.log('Computer won!');
+        alert('Player won in ' + totalRounds + ' rounds');
     }
 }
 
-var PLAYER_LOST = -1;
-var TIE = 0;
-var PLAYER_WON = 1;
+function playersHaveCards(playerDeck, computerDeck) {
+    return (playerDeck.length >= 1 && computerDeck.length >= 1);
+}
 
-function playRound(playerDeck, computerDeck) {
-    var playerCard = playerDeck.shift();
-    var computerCard = computerDeck.shift();
-    var result = compareCards(playerCard, computerCard);
-    var cards = [playerCard, computerCard];
+function drawCardsFromDeck(deck, totalCards) {
+    var cards = [];
 
-    if (result == TIE) {
-        war(playerDeck, computerDeck, cards);
+    for (var i = 0; i < totalCards; i++) {
+        cards.push(deck.shift());
     }
-    else if (result == PLAYER_WON) {
-        transferCardsToWinner(playerDeck, cards);
-    }
-    else if (result == PLAYER_WON) {
-        transferCardsToWinner(computerDeck, cards);
-    }
+
+    return cards;
 }
 
 function war(playerDeck, computerDeck, cards) {
-    var playerHasEnough = (playerDeck.length >= 2);
-    var computerHasEnough = (playerDeck.length >= 2);
+    cards = cards || [];
+    var cardsToDraw = (cards.length == 0) ? 1 : 2;
 
-    if (!playerHasEnough) {
+    var playerHasEnoughCards = (playerDeck.length >= cardsToDraw);
+    var computerHasEnoughCards = (computerDeck.length >= cardsToDraw);
+
+    if (!playerHasEnoughCards) {
         transferCardsToWinner(computerDeck, cards);
+        transferCardsToWinner(computerDeck, playerDeck);
         return;
     }
-    else if (!computerHasEnough) {
+    else if (!computerHasEnoughCards) {
         transferCardsToWinner(playerDeck, cards);
+        transferCardsToWinner(playerDeck, computerDeck);
         return;
     }
 
-    cards.push(playerDeck.shift());
-    var playerCard = playerDeck.shift();
+    var playerCards = drawCardsFromDeck(playerDeck, cardsToDraw);
+    cards = cards.concat(playerCards);
 
-    cards.push(computerDeck.shift());
-    var computerCard = computerDeck.shift();
+    var computerCards = drawCardsFromDeck(computerDeck, cardsToDraw);
+    cards = cards.concat(computerCards);
 
+    var playerCard = playerCards[playerCards.length - 1];
+    var computerCard = computerCards[computerCards.length - 1];
     var result = compareCards(playerCard, computerCard);
+    console.log(playerCard.toString(), computerCard.toString(), result);
+    console.log('\n');
 
     if (result == TIE) {
         war(playerDeck, computerDeck, cards);
@@ -113,13 +141,7 @@ function war(playerDeck, computerDeck, cards) {
     else if (result == PLAYER_WON) {
         transferCardsToWinner(playerDeck, cards);
     }
-    else if (result == PLAYER_WON) {
+    else if (result == PLAYER_LOST) {
         transferCardsToWinner(computerDeck, cards);
-    }
-}
-
-function transferCardsToWinner(deck, cards) {
-    for (var i = 0; i < cards.length; i++) {
-        toDeck.push(cards.shift());
     }
 }

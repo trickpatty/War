@@ -9,10 +9,10 @@ Card.QUEEN = 12;
 Card.KING = 13;
 
 Card.SUITS = [Card.HEARTS, Card.SPADES, Card.CLUBS, Card.DIAMONDS];
-Card.VALUES = [' ', 'Ace', '2', '3',
+Card.VALUES = [' ', 'A', '2', '3',
                '4', '5', '6', '7',
                '8', '9', '10',
-               'Jack', 'Queen', 'King'];
+               'J', 'Q', 'K'];
 
 function Card(value, suit) {
     this.value = value;
@@ -29,7 +29,7 @@ Card.prototype.getSuit = function() {
 
 Card.prototype.toString = function() {
     var valueName = Card.VALUES[this.value];
-    return valueName + ' of ' + this.suit;
+    return valueName;
 };
 
 Card.createDeck = function() {
